@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { DivinationResult } from '../types';
 
 interface DivinationCardProps {
@@ -8,6 +8,8 @@ interface DivinationCardProps {
 
 export const DivinationCard: React.FC<DivinationCardProps> = ({ data, loading }) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [loadingText, setLoadingText] = useState("推演中");
+  const [isVisible, setIsVisible] = useState(true);
   
   // Dimensions for the card
   const width = 480;
@@ -26,6 +28,35 @@ export const DivinationCard: React.FC<DivinationCardProps> = ({ data, loading })
     accent: "#BC3632",        // Cinnabar Red
     line: "#D4C4B7"
   };
+
+  useEffect(() => {
+    if (!loading) return;
+    
+    const phrases = ["推演中"];
+    let index = 0;
+    setLoadingText(phrases[0]);
+    setIsVisible(true);
+
+    let timeoutId: any;
+    // Very Slow cycle: Total 4000ms per phrase (2s fade out, 2s fade in)
+    const interval = setInterval(() => {
+      // 1. Start Fade Out (takes 2000ms)
+      setIsVisible(false);
+
+      // 2. Wait for fade out to complete (2000ms), then swap text and Fade In
+      timeoutId = setTimeout(() => {
+        index = (index + 1) % phrases.length;
+        setLoadingText(phrases[index]);
+        setIsVisible(true);
+      }, 2000);
+      
+    }, 4000); 
+
+    return () => {
+        clearInterval(interval);
+        clearTimeout(timeoutId);
+    };
+  }, [loading]);
 
   // --- LOADING STATE: EXQUISITE LUO PAN ---
   if (loading) {
@@ -116,8 +147,8 @@ export const DivinationCard: React.FC<DivinationCardProps> = ({ data, loading })
          {/* 3. Text Status */}
          <div className="absolute bottom-8 flex flex-col items-center space-y-3 z-20">
              <div className="h-8 w-[1px] bg-gradient-to-b from-transparent via-[#1A1A1A] to-transparent opacity-30"></div>
-             <p className="font-serif text-[#1A1A1A] text-xl tracking-[0.5em] font-bold opacity-90 animate-pulse">
-                观 象
+             <p className={`font-serif text-[#1A1A1A] text-xl tracking-[0.5em] font-bold transition-opacity duration-[2000ms] ease-in-out min-h-[1.75rem] whitespace-nowrap ${isVisible ? 'opacity-90' : 'opacity-0'}`}>
+                {loadingText}
              </p>
              <p className="font-serif text-[#8C7B70] text-xs tracking-[0.2em] opacity-70">
                 THE TAO IS MOVING
